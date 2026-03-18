@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "npm run type-check && vite build",
     "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit -p tsconfig.app.json",
+    "type-check": "vue-tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "cms:up": "docker compose up -d",
     "cms:down": "docker compose down",
     "cms:logs": "docker compose logs -f directus"
