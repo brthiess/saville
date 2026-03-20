@@ -1,89 +1,56 @@
 <script setup lang="ts">
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink } from 'vue-router'
 
-import { NAV_ITEMS } from '../config/constants'
 import { useAppStore } from '../stores/app'
 
 const appStore = useAppStore()
-const route = useRoute()
-
-function isActive(path: string): boolean {
-  return route.path === path
-}
 </script>
 
 <template>
-  <header class="site-header">
-    <div class="container header-inner">
-      <RouterLink to="/" class="brand">
-        <span class="brand-mark" aria-hidden="true">●</span>
-        <span>{{ appStore.clubName }}</span>
+  <nav class="fixed top-0 z-50 w-full border-b border-surface-container bg-white/80 backdrop-blur-md">
+    <div class="mx-auto flex w-full max-w-screen-2xl items-center justify-between px-6 py-4 lg:px-10">
+      <RouterLink
+        to="/"
+        class="font-headline text-xl font-black uppercase tracking-tighter text-primary lg:text-2xl"
+      >
+        {{ appStore.clubName }}
       </RouterLink>
 
-      <nav aria-label="Main navigation" class="main-nav">
+      <div class="hidden items-center gap-6 md:flex" aria-label="Main navigation">
         <RouterLink
-          v-for="item in NAV_ITEMS"
-          :key="item.to"
-          :to="item.to"
-          class="nav-link"
-          :class="{ active: isActive(item.to) }"
+          to="/leagues"
+          class="font-label text-sm font-semibold text-on-surface transition-colors hover:text-primary"
+          >Leagues</RouterLink
         >
-          {{ item.label }}
-        </RouterLink>
-      </nav>
+        <a
+          class="font-label text-sm font-semibold text-on-surface transition-colors hover:text-primary"
+          href="#"
+          >Rentals</a
+        >
+        <a
+          class="font-label text-sm font-semibold text-on-surface transition-colors hover:text-primary"
+          href="#"
+          >Programs</a
+        >
+        <a
+          class="font-label text-sm font-semibold text-on-surface transition-colors hover:text-primary"
+          href="#"
+          >Calendar</a
+        >
+      </div>
+
+      <div class="flex items-center gap-4">
+        <RouterLink
+          to="/member-login"
+          class="font-label text-sm font-bold text-primary hover:underline"
+          >Member Login</RouterLink
+        >
+        <RouterLink
+          to="/create-account"
+          class="font-label rounded-lg bg-primary px-5 py-2 text-sm font-bold text-white transition-all hover:bg-opacity-90"
+          >Register Now</RouterLink
+        >
+      </div>
     </div>
-  </header>
+  </nav>
 </template>
-
-<style scoped>
-.site-header {
-  background: var(--color-green-700);
-  color: var(--color-white);
-}
-
-.header-inner {
-  min-height: 4.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-.brand-mark {
-  color: var(--color-gold-500);
-  font-size: 0.9rem;
-}
-
-.main-nav {
-  display: inline-flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.nav-link {
-  padding: 0.45rem 0.72rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: background 0.15s ease;
-}
-
-.nav-link:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.nav-link.active {
-  background: rgba(255, 255, 255, 0.24);
-  color: var(--color-gold-500);
-}
-</style>
