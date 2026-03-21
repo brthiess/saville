@@ -25,7 +25,25 @@ if (!configuredDirectusUrl) {
   throw new Error('Missing VITE_DIRECTUS_URL environment variable.')
 }
 
-export const DIRECTUS_URL = configuredDirectusUrl.replace(/\/$/, '')
+function normalizeDirectusUrl(value: string): string {
+  const trimmedValue = value.trim()
+
+  if (/^https?:\/\//i.test(trimmedValue)) {
+    return trimmedValue.replace(/\/$/, '')
+  }
+
+  if (trimmedValue.startsWith('/')) {
+    if (typeof window === 'undefined') {
+      return trimmedValue.replace(/\/$/, '')
+    }
+
+    return new URL(trimmedValue, window.location.origin).toString().replace(/\/$/, '')
+  }
+
+  throw new Error('VITE_DIRECTUS_URL must be an absolute URL or a root-relative path (for example: /api).')
+}
+
+export const DIRECTUS_URL = normalizeDirectusUrl(configuredDirectusUrl)
 
 function buildUrl(path: string, params: QueryParams = {}): URL {
   const url = new URL(path, `${DIRECTUS_URL}/`)
