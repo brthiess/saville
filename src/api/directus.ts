@@ -19,10 +19,16 @@ export interface DirectusRequestOptions {
   fallbackErrorMessage?: string
 }
 
-export const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'http://localhost:8055'
+const configuredDirectusUrl = import.meta.env.VITE_DIRECTUS_URL?.trim()
+
+if (!configuredDirectusUrl) {
+  throw new Error('Missing VITE_DIRECTUS_URL environment variable.')
+}
+
+export const DIRECTUS_URL = configuredDirectusUrl.replace(/\/$/, '')
 
 function buildUrl(path: string, params: QueryParams = {}): URL {
-  const url = new URL(path, `${DIRECTUS_URL.replace(/\/$/, '')}/`)
+  const url = new URL(path, `${DIRECTUS_URL}/`)
 
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== null) {

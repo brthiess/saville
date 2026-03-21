@@ -1,166 +1,127 @@
 # Saville Curling Centre Starter (Vue 3 + Directus)
 
-A frontend-only starter SPA for a curling club website. This project uses Vue 3 with TypeScript and Vite, and reads content from Directus as a headless CMS.
+Vue 3 + TypeScript + Vite frontend with Directus as a headless CMS.
 
-## Stack
+## Current architecture
 
-- Vue 3 (SPA)
-- TypeScript
-- Vite
-- Vue Router
-- Pinia
-- Directus REST API (local via Docker Compose or remote)
+- Frontend: Vue SPA in `src/`, built with Vite.
+- CMS/API: Directus (Docker image).
+- Data: Postgres.
+- Local workflow: frontend runs on host (`npm run dev`), Directus + Postgres run in Docker Compose.
+- Production target (Render):
+  - Vue as a static site service
+  - Directus as a separate web service (Docker)
+  - Render managed Postgres
 
-## What this starter includes
+## Environment variables
 
-- Routes:
-  - `/` (homepage)
-  - `/leagues`
-  - `/create-account` (Directus account registration)
-  - `/member-login` (Directus member authentication)
-- Reusable components:
-  - `AppHeader`
-  - `AppFooter`
-  - `AnnouncementCard`
-  - `LeagueCard`
-- Directus API layer:
-  - `src/api/auth.ts`
-  - `src/api/directus.ts`
-  - `src/api/announcements.ts`
-  - `src/api/leagues.ts`
-  - `src/api/siteSettings.ts`
-- Shared TypeScript models in `src/types`
-- Pinia app store for site settings + persisted member auth session
-- Loading and friendly error states when API calls fail
+Frontend (`.env` from `.env.example`):
 
-## Prerequisites
+- `VITE_DIRECTUS_URL` (required): Directus API base URL.
+- `VITE_DIRECTUS_ADMIN_URL` (optional): explicit admin login URL for "Forgot Password".
+- `VITE_DIRECTUS_ENFORCE_MEMBER_ROLE` (optional): `true` / `false`.
+- `VITE_DIRECTUS_MEMBER_ROLE_ALLOWLIST` (optional): comma-separated role/policy names or IDs.
 
-- Node.js 18+ (Node 20 recommended)
-- Docker Desktop (for the included local Directus instance), or an existing Directus instance
+Directus (`.env.directus` from `.env.directus.example`):
 
-## Setup
+- `KEY`, `SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`
+- `PUBLIC_URL`, `CORS_ENABLED`, `CORS_ORIGIN`
+- `DB_CLIENT`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USER`, `DB_PASSWORD`
 
-1. Install dependencies:
+## Local development (keeps current workflow)
+
+1. Install frontend dependencies:
 
 ```bash
 npm install
 ```
 
-2. Configure frontend environment variables:
+2. Create local frontend env:
 
 ```bash
 cp .env.example .env
 ```
 
-If you are on Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-3. Set your Directus URL in `.env`:
-
-```env
-VITE_DIRECTUS_URL=http://localhost:8055
-VITE_DIRECTUS_ENFORCE_MEMBER_ROLE=false
-VITE_DIRECTUS_MEMBER_ROLE_ALLOWLIST=Curler,Customer,Member
-```
-
-`VITE_DIRECTUS_ENFORCE_MEMBER_ROLE` can be switched to `true` to restrict member login.
-`VITE_DIRECTUS_MEMBER_ROLE_ALLOWLIST` accepts role or policy names and/or UUIDs.
-
-4. Configure local Directus environment variables (skip this if using a remote Directus URL):
+3. Create local Directus env:
 
 ```bash
 cp .env.directus.example .env.directus
 ```
 
-If you are on Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 Copy-Item .env.directus.example .env.directus
 ```
 
-5. Start local Directus + Postgres (skip this if using a remote Directus URL):
+4. Start local CMS stack (Directus + Postgres in Docker):
 
 ```bash
-docker compose up -d
+npm run cms:up
 ```
 
-6. Start the development server:
+5. Start Vue dev server (outside Docker):
 
 ```bash
 npm run dev
 ```
 
-7. Build for production:
+Useful CMS commands:
 
 ```bash
-npm run build
-```
-
-## Local Directus instance
-
-This repository includes a local Directus instance in `docker-compose.yml`.
-
-- Directus URL: `http://localhost:8055`
-- Postgres runs inside Docker and is wired to Directus automatically
-- Local Directus config template: `.env.directus.example`
-
-Useful commands:
-
-```bash
-npm run cms:up
 npm run cms:logs
 npm run cms:down
 ```
 
-First login uses the values in `.env.directus`:
+## Render deployment
 
-- `ADMIN_EMAIL`
-- `ADMIN_PASSWORD`
+This repo includes `render.yaml` and `Dockerfile.directus`.
 
-## Directus collections expected
+- Static site: `saville-web`
+- Directus web service (Docker): `saville-directus`
+- Managed Postgres: `saville-db`
 
-Public read access should be enabled for the following collections:
+### Deploy steps
 
-### `announcements`
-- `id`
-- `title`
-- `summary`
-- `date_posted`
+1. Push this repository to GitHub.
+2. In Render, create a Blueprint service from the repo (uses `render.yaml`).
+3. Set required secrets in Render:
+   - `ADMIN_EMAIL`
+   - `ADMIN_PASSWORD`
+   - `CORS_ORIGIN` (your frontend URL)
+   - optional `VITE_DIRECTUS_MEMBER_ROLE_ALLOWLIST`
+4. Update URLs after first deploy:
+   - `PUBLIC_URL` for Directus should match its actual Render URL or custom domain.
+   - `VITE_DIRECTUS_URL` / `VITE_DIRECTUS_ADMIN_URL` should point to Directus.
 
-### `leagues`
-- `id`
-- `name`
-- `description`
-- `day_of_week`
-- `start_time`
-- `skill_level`
-- `registration_open`
-- `price`
+## Routing notes (`/`, `/api`, `/admin`)
 
-### `site_settings`
-- `id`
-- `club_name`
-- `tagline`
-- `contact_email`
+- `/` is handled by the Vue static site.
+- `/admin` is provided by Directus at `<directus-domain>/admin`.
+- `/api` on the same root domain as the static site is not natively handled by this simple Render setup because frontend and Directus are separate services.
 
-## Directus member authentication and registration setup
+### Cleanest production option
 
-To support `/create-account` and `/member-login`:
+- Use separate domains:
+  - Frontend: `https://www.example.com`
+  - Directus API/Admin: `https://cms.example.com` (`/admin` lives here)
+- Set:
+  - `VITE_DIRECTUS_URL=https://cms.example.com`
+  - `VITE_DIRECTUS_ADMIN_URL=https://cms.example.com/admin/login`
 
-1. Create a member role in Directus named `Curler`.
-2. Enable public registration in Directus so frontend registration can call `/users/register`.
-3. Configure Directus so new public registrations are assigned to `Curler` (recommended).
-4. In frontend `.env`, optionally set:
-  - `VITE_DIRECTUS_ENFORCE_MEMBER_ROLE=true`
-  - `VITE_DIRECTUS_MEMBER_ROLE_ALLOWLIST=Curler,<curler-role-uuid>`
+If strict same-domain path routing (`/api`, `/admin`) is mandatory, place a reverse proxy (for example Cloudflare, Nginx, or another edge gateway) in front of both Render services.
 
-The account page submits to Directus `/users/register` using `email`, `password`, `first_name`, and `last_name`. Directus assigns the role from its registration settings. The login view authenticates against `/auth/login`, loads `/users/me`, and stores the auth session in browser local storage.
+## Build
 
-If Directus returns the role as an ID during login checks, include that UUID in `VITE_DIRECTUS_MEMBER_ROLE_ALLOWLIST`.
-If your instance is policy-first and role is empty, include the policy name/UUID in `VITE_DIRECTUS_MEMBER_ROLE_ALLOWLIST`.
+```bash
+npm run build
+```
 
 ## Project structure
 
@@ -168,50 +129,19 @@ If your instance is policy-first and role is empty, include the policy name/UUID
 .
 ├─ src/
 │  ├─ api/
-│  │  ├─ auth.ts
-│  │  ├─ announcements.ts
-│  │  ├─ directus.ts
-│  │  ├─ leagues.ts
-│  │  └─ siteSettings.ts
 │  ├─ assets/
-│  │  └─ main.css
 │  ├─ components/
-│  │  ├─ AnnouncementCard.vue
-│  │  ├─ AppFooter.vue
-│  │  ├─ AppHeader.vue
-│  │  └─ LeagueCard.vue
 │  ├─ config/
-│  │  └─ constants.ts
 │  ├─ router/
-│  │  └─ index.ts
 │  ├─ stores/
-│  │  └─ app.ts
 │  ├─ types/
-│  │  ├─ announcement.ts
-│  │  ├─ auth.ts
-│  │  ├─ index.ts
-│  │  ├─ league.ts
-│  │  └─ siteSettings.ts
 │  ├─ views/
-│  │  ├─ CreateAccountView.vue
-│  │  ├─ HomeView.vue
-│  │  ├─ LeaguesView.vue
-│  │  └─ MemberLoginView.vue
 │  ├─ App.vue
 │  └─ main.ts
-├─ .env.directus.example
 ├─ .env.example
+├─ .env.directus.example
 ├─ docker-compose.yml
-├─ index.html
-├─ package.json
-├─ tsconfig.app.json
-├─ tsconfig.json
-├─ tsconfig.node.json
+├─ Dockerfile.directus
+├─ render.yaml
 └─ vite.config.ts
 ```
-
-## Notes
-
- - This project intentionally does **not** use Nuxt, SSR, backend APIs, or payments.
-- Member login now uses Directus authentication. Production hardening (MFA, stricter policies, refresh rotation strategy) can be added later.
-- This is a clean proof-of-concept foundation that can be expanded later for registration, member accounts, rentals, and richer content workflows.

@@ -2,6 +2,7 @@
 import { computed, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import { DIRECTUS_URL } from '../api/directus'
 import { useAppStore } from '../stores/app'
 
 const appStore = useAppStore()
@@ -15,7 +16,10 @@ const loginForm = reactive({
 const formError = ref<string | null>(null)
 const statusMessage = ref<string | null>(null)
 const showPassword = ref(false)
-const forgotPasswordUrl = `${(import.meta.env.VITE_DIRECTUS_URL || 'http://localhost:8055').replace(/\/$/, '')}/admin/login`
+const configuredDirectusAdminUrl = import.meta.env.VITE_DIRECTUS_ADMIN_URL?.trim()
+const forgotPasswordUrl = configuredDirectusAdminUrl
+  ? configuredDirectusAdminUrl.replace(/\/$/, '')
+  : `${DIRECTUS_URL}/admin/login`
 
 const isSubmitting = computed(() => appStore.isAuthLoading)
 

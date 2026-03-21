@@ -1,11 +1,15 @@
+name: saville-local
+
 services:
   database:
     image: postgres:16-alpine
     restart: unless-stopped
+    env_file:
+      - .env.directus
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-directus}
-      POSTGRES_USER: ${DB_USER:-directus}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-directus}
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - directus_database:/var/lib/postgresql/data
     healthcheck:
