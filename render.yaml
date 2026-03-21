@@ -1,6 +1,20 @@
-databases:
-  - name: saville-db
-    plan: starter
+# Exported from Render on 2026-03-21T04:44:00Z
+version: "1"
+projects:
+- name: saville
+  environments:
+  - name: Production
+    databases:
+    - name: saville-db
+      databaseName: saville
+      user: brad
+      plan: free
+      region: oregon
+      ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+      postgresMajorVersion: "18"
+
 
 services:
   - type: web
