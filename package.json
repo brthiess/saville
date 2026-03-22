@@ -8,9 +8,9 @@
     "build": "npm run type-check && vite build",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
-    "cms:up": "docker compose up -d",
-    "cms:down": "docker compose down",
-    "cms:logs": "docker compose logs -f directus"
+    "cms:up": "docker compose --env-file .env.directus up -d",
+    "cms:down": "docker compose --env-file .env.directus down",
+    "cms:logs": "docker compose --env-file .env.directus logs -f directus"
   },
   "dependencies": {
     "pinia": "^2.1.7",

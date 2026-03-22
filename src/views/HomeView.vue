@@ -1,5 +1,36 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+
+import { getLeagues } from '../api/leagues'
+import { formatCurrency, formatTime } from '../config/constants'
+import type { League } from '../types'
+
+const FEATURED_LEAGUES_LIMIT = 5
+const FEATURED_LEAGUE_IMAGE =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuC3Fkmtjw1eh_nAqrzAe9iEKieit4EZLCF8jaqx6u2VLehCuuWlXCSZrr2KxpXNstNt_HNgY1CqThYNQk8Tdm9eXFTRsDMicRSI1GlISL3-W6AtgvPjD2w3D9LKu6Q6N-m89POvbwZEuw1_GRI7PkwcBPY7PBgv11PcCk6BZnAo_ImR6c9pitpxyyZv20dAC7l5trPaKRYVyyla_Fq6BEvui6oAhRE5jvj3LZkv-EkGJFx3OEtmZyLScbDuJDhP-q_J4NAo5BKRO8RP'
+
+const featuredLeagues = ref<League[]>([])
+const isLeaguesLoading = ref(true)
+const leaguesErrorMessage = ref<string | null>(null)
+
+async function loadFeaturedLeagues() {
+  isLeaguesLoading.value = true
+  leaguesErrorMessage.value = null
+
+  try {
+    featuredLeagues.value = await getLeagues(FEATURED_LEAGUES_LIMIT)
+  } catch {
+    leaguesErrorMessage.value =
+      'Unable to load leagues right now. Please check your connection and try again.'
+  } finally {
+    isLeaguesLoading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadFeaturedLeagues()
+})
 </script>
 
 <template>
@@ -107,26 +138,34 @@ import { RouterLink } from 'vue-router'
             Find the right environment for your skill level and goals.
           </p>
         </div>
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
+        <p v-if="isLeaguesLoading" class="text-on-surface-variant">Loading leagues from Directus…</p>
+        <p v-else-if="leaguesErrorMessage" class="text-sm font-medium text-secondary">
+          {{ leaguesErrorMessage }}
+        </p>
+
+        <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
           <div
+            v-for="league in featuredLeagues"
+            :key="league.id"
             class="group flex flex-col overflow-hidden rounded-xl border border-surface-container bg-white shadow-sm transition-shadow hover:shadow-md"
           >
             <div class="relative h-40 overflow-hidden">
               <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3Fkmtjw1eh_nAqrzAe9iEKieit4EZLCF8jaqx6u2VLehCuuWlXCSZrr2KxpXNstNt_HNgY1CqThYNQk8Tdm9eXFTRsDMicRSI1GlISL3-W6AtgvPjD2w3D9LKu6Q6N-m89POvbwZEuw1_GRI7PkwcBPY7PBgv11PcCk6BZnAo_ImR6c9pitpxyyZv20dAC7l5trPaKRYVyyla_Fq6BEvui6oAhRE5jvj3LZkv-EkGJFx3OEtmZyLScbDuJDhP-q_J4NAo5BKRO8RP"
-                alt="Learn to Curl"
+                :src="FEATURED_LEAGUE_IMAGE"
+                :alt="league.name"
                 class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div class="absolute inset-0 bg-primary/10"></div>
             </div>
             <div class="flex flex-grow flex-col p-5">
               <div class="mb-3">
-                <h3 class="text-lg font-headline font-bold text-primary">Learn to Curl</h3>
-                <p class="text-xs font-bold uppercase text-secondary">(Smart Start)</p>
+                <h3 class="text-lg font-headline font-bold text-primary">{{ league.name }}</h3>
+                <p class="text-xs font-bold uppercase text-secondary">{{ league.skill_level }}</p>
               </div>
-              <p class="mb-6 text-sm text-on-surface-variant">
-                The perfect introduction for new curlers. Learn the basics in a supportive
-                environment.
+              <p class="mb-3 text-sm text-on-surface-variant">{{ league.description }}</p>
+              <p class="mb-6 text-xs font-semibold uppercase tracking-wide text-primary/70">
+                {{ league.day_of_week }} · {{ formatTime(league.start_time) }} ·
+                {{ formatCurrency(league.price) }}
               </p>
               <div class="mt-auto flex flex-col gap-2">
                 <RouterLink
@@ -143,141 +182,9 @@ import { RouterLink } from 'vue-router'
             </div>
           </div>
 
-          <div
-            class="group flex flex-col overflow-hidden rounded-xl border border-surface-container bg-white shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div class="relative h-40 overflow-hidden">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWbcfcQiy1IEqIeMmAHaalxYiojnLrdp8G44MOYkiL5DfqhH3b9-bbizXsUH5MA-dc4L3GLQHUewMUoBOQDHyeeF0aj9bplYokRvkt4DvBpX1gUj5hCr_FU7H7MPwXgAuDe29uReOyo-vdlKEno5V3c8TnAA4WT_wSANiGYv4ZBZwpJrw4glAko5yFHgG_Ordm9I7sonj6Ep1LiZ0dpflL--AAKtNTwu0BRga5aFXJajAm4Lq1kbm-WDoDWlx4D-OZUMz6BW2bFV0s"
-                alt="Rookie League"
-                class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div class="absolute inset-0 bg-primary/10"></div>
-            </div>
-            <div class="flex flex-grow flex-col p-5">
-              <div class="mb-3">
-                <h3 class="text-lg font-headline font-bold text-primary">Rookie League</h3>
-                <p class="text-xs font-bold uppercase text-secondary">Novice Play</p>
-              </div>
-              <p class="mb-6 text-sm text-on-surface-variant">
-                For those with 1-3 years of experience. Refine your game with social competition.
-              </p>
-              <div class="mt-auto flex flex-col gap-2">
-                <RouterLink
-                  to="/create-account"
-                  class="w-full rounded bg-primary py-2 text-center text-sm font-bold text-white transition-colors hover:bg-opacity-90"
-                  >Register</RouterLink
-                >
-                <RouterLink
-                  to="/leagues"
-                  class="w-full rounded border border-primary py-2 text-center text-sm font-bold text-primary transition-colors hover:bg-primary/5"
-                  >View Details</RouterLink
-                >
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="group flex flex-col overflow-hidden rounded-xl border border-surface-container bg-white shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div class="relative h-40 overflow-hidden">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOe5Z6dYE5cpYebapM6FSNme9y6P2J_VhAAQaq-b7lT9uh39syVcmEBfxHgxsVescMNdNR4ZCL7TVgWkWv6wjk-Uhq_TtgnutfWKVczFjmm08KBYfPQU7SmOWbV548pu4rYNRgJ3Y9a-4XRP0HQK1PdRGVAGnYpDkkRwlUo6eqY5TmBJlfIrfdLQJj2kLOKLKu0dwc3XScwOxbOBAjMPLxHlzDy_72bnU_fmGdtG241jXeifcyaGt19JqKDs4RiFuM4MiNwlyRgu6o"
-                alt="Competitive Leagues"
-                class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div class="absolute inset-0 bg-primary/10"></div>
-            </div>
-            <div class="flex flex-grow flex-col p-5">
-              <div class="mb-3">
-                <h3 class="text-lg font-headline font-bold text-primary">Competitive Leagues</h3>
-                <p class="text-xs font-bold uppercase text-secondary">Elite Stream</p>
-              </div>
-              <p class="mb-6 text-sm text-on-surface-variant">
-                High-intensity play for experienced teams looking for provincial-level challenge.
-              </p>
-              <div class="mt-auto flex flex-col gap-2">
-                <RouterLink
-                  to="/create-account"
-                  class="w-full rounded bg-primary py-2 text-center text-sm font-bold text-white transition-colors hover:bg-opacity-90"
-                  >Register</RouterLink
-                >
-                <RouterLink
-                  to="/leagues"
-                  class="w-full rounded border border-primary py-2 text-center text-sm font-bold text-primary transition-colors hover:bg-primary/5"
-                  >View Details</RouterLink
-                >
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="group flex flex-col overflow-hidden rounded-xl border border-surface-container bg-white shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div class="relative h-40 overflow-hidden">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCavEm5fVsd_bkT4S8QaEWCydlDH5RXQO_zrGIzUeHW8VPZOMeVnV9Fc9zxeK8WaoyBOJDl1cXdKPu5VOJFKTeECcrfa8WeONHb8wTsygyIy_tqtV2-xUsJGCYiuPbcnLroUGRAy7dcp6aD8F1r1TZJozHlXkbYAA852af_49V3Y1kyi1vWaIdGq1BaDkXMiqAa7ryz1VtY7kmGCZuD7iV6CLZEmLLnzMs6fC94qUjApIrfQfA-IQU9ZeWkoA5HjuBQS7X5aVVso9ba"
-                alt="Youth Programs"
-                class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div class="absolute inset-0 bg-primary/10"></div>
-            </div>
-            <div class="flex flex-grow flex-col p-5">
-              <div class="mb-3">
-                <h3 class="text-lg font-headline font-bold text-primary">Youth Programs</h3>
-                <p class="text-xs font-bold uppercase text-secondary">Ages 6-18</p>
-              </div>
-              <p class="mb-6 text-sm text-on-surface-variant">
-                Developing the next generation of curlers through fun, skill-based training.
-              </p>
-              <div class="mt-auto flex flex-col gap-2">
-                <RouterLink
-                  to="/create-account"
-                  class="w-full rounded bg-primary py-2 text-center text-sm font-bold text-white transition-colors hover:bg-opacity-90"
-                  >Register</RouterLink
-                >
-                <RouterLink
-                  to="/leagues"
-                  class="w-full rounded border border-primary py-2 text-center text-sm font-bold text-primary transition-colors hover:bg-primary/5"
-                  >View Details</RouterLink
-                >
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="group flex flex-col overflow-hidden rounded-xl border border-surface-container bg-white shadow-sm transition-shadow hover:shadow-md"
-          >
-            <div class="relative h-40 overflow-hidden">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZmqS_oL8P8Rv4Pso-57sCT99hNaDHL8uhwGwEr-j0KjenWHijR8hoJ7FqaibceUHr2MH9Db4r2Ua4iSZpM70wAM6rLQknokFGUmrQGEGSrNvWIkyIblpZxmQCr_NGDJ5QJ7bIVbvtcHWZ1GOWfaiHXu-o9v1lDwEQKv7FkhOqLfrn2JpohdvttuNQ2TEvOQM1aGMMks-8R0XU8QCPDb-7Gli2FJE1wi3DEXLHuoKBMbwX5VKg7iPkhKWwXzQyxwfDqNShDD-n4VeV"
-                alt="Clinics"
-                class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div class="absolute inset-0 bg-primary/10"></div>
-            </div>
-            <div class="flex flex-grow flex-col p-5">
-              <div class="mb-3">
-                <h3 class="text-lg font-headline font-bold text-primary">Clinics</h3>
-                <p class="text-xs font-bold uppercase text-secondary">Skill Building</p>
-              </div>
-              <p class="mb-6 text-sm text-on-surface-variant">
-                Targeted coaching for delivery, strategy, and sweeping from expert instructors.
-              </p>
-              <div class="mt-auto flex flex-col gap-2">
-                <RouterLink
-                  to="/create-account"
-                  class="w-full rounded bg-primary py-2 text-center text-sm font-bold text-white transition-colors hover:bg-opacity-90"
-                  >Register</RouterLink
-                >
-                <RouterLink
-                  to="/leagues"
-                  class="w-full rounded border border-primary py-2 text-center text-sm font-bold text-primary transition-colors hover:bg-primary/5"
-                  >View Details</RouterLink
-                >
-              </div>
-            </div>
-          </div>
+          <p v-if="featuredLeagues.length === 0" class="text-on-surface-variant">
+            No leagues are currently available.
+          </p>
         </div>
       </div>
     </section>
